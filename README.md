@@ -44,4 +44,4 @@ In theory, this can also be used as a workaround, in a system where some form of
 
 ### Note
 
-+ This creates a file named `.enchanted_doll_target` (which is usually invisible in a file manager) in the generated directory to store data. Please do not edit or create any file of that name. It is (the only file) not moved into the target when synchronizing.
++ This creates a file named `.enchanted_doll_target` (which is usually invisible in a file manager) in the generated directory, to store data. Please do not edit or create any file of that name. It is (the only file) not moved into the target when synchronizing.
