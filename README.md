@@ -10,7 +10,7 @@ A helper for making and maintaining symbol links.
 
 ### Usage
 
-While this script is in your `PATH`, use the following command to link with a directory (`path/to/mydir` in this example.)
+After adding `dolls.py` to your `PATH`, use the following command to link with a directory (`path/to/mydir` in this example.)
 ```sh
 dolls.py link /path/to/mydir
 ```
@@ -22,16 +22,15 @@ dolls.py sync
 ```
 This moves all non-symlink files into the pre-set target directory, then creates a symbol link to each new file in the target.
 
-For linking new files without moving any, use
+For linking new files without moving any, use:
 ```sh
 dolls.py update
 ```
 
-Use the following command to see the files linked
+Use the following command to see the files linked.
 ```sh
 dolls.py list
 ```
-
 
 ### Why needed?
 
@@ -44,6 +43,6 @@ In theory, this can also be used as a workaround, in a system where some form of
 
 ### Note
 
-+ This creates a file named `.enchanted_doll_target` (which is usually invisible in a file manager) in the generated directory, to store data. Please do not edit or create any file of that name. It is (the only file) not moved into the target when synchronizing.
++ This program creates a file named `.enchanted_doll_target` (which is usually invisible in a file manager) in the generated directory, for storing data. Please do not edit or create any file of the name. It is (the only file) not moved into the target directory when synchronizing.
 
 + This is tested on Android with Termux. Other platforms are (currently) not tested for.
