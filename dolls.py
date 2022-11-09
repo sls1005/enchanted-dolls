@@ -15,7 +15,7 @@ commands:
 
     link <path>             Set <path> as the target directory, then create symbolic links (to the files in the target) in a new directory of the same name.
 
-    update                  Update the current directory by removing broken links, then create a symlink for each new file in the pre-set target directory.
+    update                  Update the current directory by removing broken links, then create a symlink to each new file in the pre-set target directory.
 
     transfer [file]         Move a file into the pre-set target directory, then create a symlink to the file. If [file] is not given, all non-symlink files in the current directory are moved. [file] must be a file name.
 
