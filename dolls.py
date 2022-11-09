@@ -84,7 +84,7 @@ def link_with(path):
         exit(-1)
     else:
         os.mkdir(dirname)
-        print('\033[1;34m%s\033[0m created.' % dirname)
+        print('\033[1;34m%s\033[0m created' % dirname)
     os.chdir(dirname)
     target += os.sep
     for name in listdir(target):
@@ -98,7 +98,7 @@ def update():
     validate_current_dir()
     with open(storage, 'r') as stored:
         path = stored.readline().strip('\n')
-    for name in listdir():
+    for name in listdir('.'):
         if islink(name):
             remove_if_broken(name)
     for name in listdir(path):
@@ -133,7 +133,7 @@ def transfer_to(directory, file, ignore_existing = False):
     move(file, new_path)
     symlink(new_path)
 
-def transfer(filename = '', *, ignore_existing = False):
+def transfer(filename = '', ignore_existing = False):
     path = ''
     validate_current_dir()
     with open(storage, 'r') as stored:
@@ -141,7 +141,7 @@ def transfer(filename = '', *, ignore_existing = False):
     if filename != '':
         transfer_to(path, file, ignore_existing)
     else:
-        for file in listdir():
+        for file in listdir('.'):
             if file != storage:
                 transfer_to(path, file, ignore_existing)
 
@@ -167,7 +167,7 @@ def list_files():
     with open(storage, 'r') as stored:
         path = stored.readline().strip('\n')
     files = listdir(path)
-    for name in listdir():
+    for name in listdir('.'):
         if name == storage:
             continue
         elif islink(name):
