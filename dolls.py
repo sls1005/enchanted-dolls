@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: ASCII -*-
 # Enchanted Dolls 2.0
-# A helper for making symbol links.
+# A symlink-making tool.
 # Python 3 is recommended for interpreting.
 import os, shutil
 from os import listdir
@@ -13,15 +13,15 @@ usage = '''usage: dolls.py <command>
 
 commands:
 
-    link <path>             Set <path> as the target directory, then create symbol links (to the files in the target) in a new directory of the same name.
+    link <path>             Set <path> as the target directory, then create symbolic links (to the files in the target) in a new directory of the same name.
 
-    update                  Update the current directory by removing broken links, then create a symbol link for each new file in the pre-set target directory.
+    update                  Update the current directory by removing broken links, then create a symlink for each new file in the pre-set target directory.
 
-    transfer [file]         Move a file into the pre-set target directory, then create a symbol link to the file. If [file] is not given, all non-symlink files in the current directory are moved. [file] must be a file name.
+    transfer [file]         Move a file into the pre-set target directory, then create a symlink to the file. If [file] is not given, all non-symlink files in the current directory are moved. [file] must be a file name.
 
     sync                    Same as running "update" and then "transfer."
 
-    delete <file>           Delete the file or directory that a symbol link points to, then remove the link. It is recursive when deleting directories. (Warning: This deletes the real file/directory)
+    delete <name>           Delete a file or subdirectory in the pre-set target directory, then remove the link. (Warning: This deletes the real file/directory)
 
     list                    List the files in the current and the target directory.
 
@@ -58,12 +58,9 @@ def check_if_exists(path):
 
 def remove_if_broken(link):
     path = os.readlink(link)
-    if exists(path): #not broken
-        return False
-    else:
+    if not exists(path):
         print('\033[1;33m[!]\033[0m The link to "%s" was broken. Removing...' % path)
         os.remove(link)
-        return True
 
 def validate_current_dir():
     if not exists(storage):
@@ -110,7 +107,7 @@ def update():
             elif ask(name + " exists. Overwrite local file?") in ('y', 'yes'):
                 delete(name)
                 hint('Linking', file)
-            elif ask("Overwrite the remote file? (Warning: The file here will be replaced with a symbol link)") in ('y', 'yes'):
+            elif ask("Overwrite the remote file? (Warning: The file here will be replaced with a symbolic link)") in ('y', 'yes'):
                 delete(file)
                 hint('Transferring', name)
                 move(name, file)
@@ -145,21 +142,29 @@ def transfer(filename = '', ignore_existing = False):
             if file != storage:
                 transfer_to(path, file, ignore_existing)
 
-def delete_file_and_link(link):
-    if islink(link):
-        removed = remove_if_broken(link)
-        if not removed:
-            path = os.readlink(link)
-            if ask('Do you wish to remove ' + path + ' ?') in ('y', 'yes'):
-                delete(path)
-                os.remove(link)
-            else:
-                print("Nothing deleted. Quitting...")
-                exit()
+def delete_file_and_link(name):
+    path = ''
+    validate_current_dir()
+    with open(storage, 'r') as stored:
+        path = stored.readline().strip('\n')
+    if name in listdir(path):
+        file = path + name
+        if ask('Do you want to delete "' + file + '" ?') in ('y', 'yes'):
+            delete(file)
+            if islink(name):
+                if os.readlink(name) == file:
+                    os.remove(name)
+        else:
+            print("Nothing deleted. Quitting...")
+    elif islink(name):
+        if os.readlink(name) == path + name:
+            remove_if_broken(name)
+        else:
+            printErrMsg('\033[1;36m%s\033[0m does not point to any file in the target directory.' % name)
+            exit(-1)
     else:
-        printErrMsg('"%s" is not a symbol link.' % link)
-        exit(-1)
-
+        printErrMsg('"%s" not found in the target directory.' % name)
+        exit(2)
 
 def list_files():
     path = ''
@@ -233,11 +238,10 @@ if __name__ == '__main__':
         elif a == "delete":
             k = i + 2
             if len(argv) == k:
-                printErrMsg('Expect a file name after "%s"' % a)
+                printErrMsg('Expect a name after "%s"' % a)
                 exit(-1)
-            link = argv[k]
-            check_if_exists(link)
-            delete_file_and_link(link)
+            name = argv[k]
+            delete_file_and_link(name)
             exit()
         elif a == 'list':
             list_files()
