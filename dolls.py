@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: ASCII -*-
-# Enchanted Dolls 2.0
-# A symlink-making tool.
+# Enchanted Dolls 2.1
+# A tool for making symlinks.
 # Python 3 is recommended for interpreting.
 import os, shutil
 from os import listdir
@@ -21,7 +21,7 @@ commands:
 
     sync                    Same as running "update" and then "transfer."
 
-    delete <name>           Delete a file or subdirectory in the pre-set target directory, then remove the link. (Warning: This deletes the real file/directory)
+    delete <name>           Delete a file or subdirectory in the pre-set target directory, then remove the symlink. (Warning: This deletes the real file/directory)
 
     list                    List the files in the current and the target directory.
 
@@ -122,7 +122,7 @@ def transfer_to(directory, file, ignore_existing = False):
     if exists(new_path):
         if ignore_existing:
             return
-        if ask(new_path + " exists. Overwrite remote file?") in ('y', 'yes'):
+        elif ask(new_path + " exists. Overwrite remote file?") in ('y', 'yes'):
             delete(new_path)
         else:
             return
@@ -136,11 +136,15 @@ def transfer(filename = '', ignore_existing = False):
     with open(storage, 'r') as stored:
         path = stored.readline().strip('\n')
     if filename != '':
-        transfer_to(path, file, ignore_existing)
+        transfer_to(path, filename, ignore_existing)
     else:
         for file in listdir('.'):
             if file != storage:
-                transfer_to(path, file, ignore_existing)
+                if islink(file):
+                    if os.readlink(file) == path + file:
+                        continue
+                else:
+                    transfer_to(path, file, ignore_existing)
 
 def delete_file_and_link(name):
     path = ''
