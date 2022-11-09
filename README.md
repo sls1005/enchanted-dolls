@@ -27,10 +27,7 @@ For linking new files without moving any, use:
 dolls.py update
 ```
 
-Use the following command to see the files linked.
-```sh
-dolls.py list
-```
+For other usages, see `dolls.py help`.
 
 ### Why needed?
 
