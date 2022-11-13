@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: ASCII -*-
-# Enchanted Dolls 2.1
+# Enchanted Dolls 2.2
 # A tool for making symlinks.
 # Python 3 is recommended for interpreting.
 import os, shutil
-from os import listdir
+from os import listdir, readlink
 from shutil import move
 from os.path import basename, islink, realpath, exists
 from sys import version_info, argv, stderr
@@ -23,7 +23,11 @@ commands:
 
     delete <name>           Delete a file or subdirectory in the pre-set target directory, then remove the symlink. (Warning: This deletes the real file/directory)
 
-    list                    List the files in the current and the target directory.
+    copy <name>             Copy a file from the pre-set target directory.
+
+    list                    List the files.
+
+    clean                   Remove broken symlinks found in this directory, if any. This can be used anywhere.
 
     help                    Show this help message and exit.
 '''
@@ -56,11 +60,11 @@ def check_if_exists(path):
         printErrMsg('"%s" not found.' % path)
         exit(2)
 
-def remove_if_broken(link):
-    path = os.readlink(link)
-    if not exists(path):
-        print('\033[1;33m[!]\033[0m The link to "%s" was broken. Removing...' % path)
-        os.remove(link)
+def clean(place='.'):
+    for name in listdir(place):
+        if islink(name):
+            if not exists(readlink(name)):
+                os.remove(name)
 
 def validate_current_dir():
     if not exists(storage):
@@ -95,14 +99,12 @@ def update():
     validate_current_dir()
     with open(storage, 'r') as stored:
         path = stored.readline().strip('\n')
-    for name in listdir('.'):
-        if islink(name):
-            remove_if_broken(name)
+    clean(".")
     for name in listdir(path):
         file = path + name
         if exists(name):
             if islink(name):
-                if os.readlink(name) == file:
+                if readlink(name) == file:
                     continue
             elif ask(name + " exists. Overwrite local file?") in ('y', 'yes'):
                 delete(name)
@@ -141,7 +143,7 @@ def transfer(filename = '', ignore_existing = False):
         for file in listdir('.'):
             if file != storage:
                 if islink(file):
-                    if os.readlink(file) == path + file:
+                    if readlink(file) == path + file:
                         continue
                 else:
                     transfer_to(path, file, ignore_existing)
@@ -153,22 +155,46 @@ def delete_file_and_link(name):
         path = stored.readline().strip('\n')
     if name in listdir(path):
         file = path + name
-        if ask('Do you want to delete "' + file + '" ?') in ('y', 'yes'):
+        if ask('Delete "' + file + '" ?') in ('y', 'yes'):
             delete(file)
             if islink(name):
-                if os.readlink(name) == file:
+                if readlink(name) == file:
                     os.remove(name)
         else:
             print("Nothing deleted. Quitting...")
     elif islink(name):
-        if os.readlink(name) == path + name:
-            remove_if_broken(name)
+        linked = readlink(name)
+        if linked == path + name:
+            if not exists(linked):
+                os.remove(name)
         else:
             printErrMsg('\033[1;36m%s\033[0m does not point to any file in the target directory.' % name)
             exit(-1)
     else:
         printErrMsg('"%s" not found in the target directory.' % name)
         exit(2)
+
+def copy(name):
+    path = ''
+    validate_current_dir()
+    with open(storage, 'r') as stored:
+        path = stored.readline().strip('\n')
+    target = path + name
+    if exists(name):
+        if islink(name):
+            if readlink(name) == target:
+                os.remove(name)
+        elif ask(name + " exists in the current directory. Overwrite?") in ('y', 'yes'):
+            delete(name)
+        else:
+            return
+    if not exists(target):
+        printErrMsg('"%s" not found.' % target)
+        exit(2)
+    if os.path.isdir(target):
+        shutil.copytree(target, '.')
+    else:
+        shutil.copy2(target, '.')
 
 def list_files():
     path = ''
@@ -180,11 +206,11 @@ def list_files():
         if name == storage:
             continue
         elif islink(name):
-            linked = os.readlink(name)
+            linked = readlink(name)
             if basename(linked) in files:
                 file = path + name
                 if islink(file):
-                    if exists(os.readlink(name)): #link
+                    if exists(readlink(name)): #link
                         print('\033[1;36m%s\033[0m' % name)
                     else: #broken link
                         print('\033[1;31m%s\033[0m' % name)
@@ -239,7 +265,7 @@ if __name__ == '__main__':
             update()
             transfer(ignore_existing=True)
             exit()
-        elif a == "delete":
+        elif a == 'delete':
             k = i + 2
             if len(argv) == k:
                 printErrMsg('Expect a name after "%s"' % a)
@@ -247,8 +273,19 @@ if __name__ == '__main__':
             name = argv[k]
             delete_file_and_link(name)
             exit()
+        elif a == 'copy':
+            k = i + 2
+            if len(argv) == k:
+                printErrMsg('Expect a name after "%s"' % a)
+                exit(-1)
+            name = argv[k]
+            copy(name)
+            exit()
         elif a == 'list':
             list_files()
+            exit()
+        elif a == 'clean':
+            clean(".")
             exit()
         else:
             printErrMsg('Unknown command: "%s"' % a)
